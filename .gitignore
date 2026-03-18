@@ -1,0 +1,45 @@
+# Environment
+.env
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Docker volumes
+postgres-data/
+metabase-data/
+
+# Airflow
+airflow/logs/
+.astro/
+logs/
+
+# dbt
+target/
+dbt_packages/
+dbt_modules/
+
+# MLflow
+mlruns/
+
+# Parquet (generated data)
+*.parquet
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# GCP credentials (never commit)
+*service-account*.json

@@ -1,0 +1,172 @@
+[
+  {
+    "product_name": "LG - 55\" Class C4 Series OLED 4K UHD Smart TV",
+    "price": 1276.03,
+    "sale_price": null,
+    "on_sale": false,
+    "source": "bestbuy",
+    "url": "https://www.bestbuy.com/site/lg-55-class-c4-series-oled-4k-uhd-smart-tv/6544013.p?skuId=6544013",
+    "category": "TVs",
+    "brand": "LG",
+    "sku": "6544013",
+    "scraped_at": "2026-03-18T05:54:20.795646+00:00",
+    "raw_payload": {
+      "sku": "6544013",
+      "name": "LG - 55\" Class C4 Series OLED 4K UHD Smart TV",
+      "regularPrice": 1276.03,
+      "salePrice": 1276.03,
+      "onSale": false,
+      "manufacturer": "LG",
+      "modelNumber": "OLED55C4PUA",
+      "categoryPath": [
+        {
+          "id": "TVs",
+          "name": "TVs"
+        }
+      ],
+      "url": "https://www.bestbuy.com/site/lg-55-class-c4-series-oled-4k-uhd-smart-tv/6544013.p?skuId=6544013",
+      "inStoreAvailability": false,
+      "onlineAvailability": true,
+      "customerReviewAverage": 3.7,
+      "customerReviewCount": 4446,
+      "_synthetic": true,
+      "_generated_at": "2026-03-18T05:54:20.795646+00:00"
+    }
+  },
+  {
+    "product_name": "Samsung - 75\" Class Q80D QLED 4K Smart TV",
+    "price": 1488.98,
+    "sale_price": null,
+    "on_sale": false,
+    "source": "bestbuy",
+    "url": "https://www.bestbuy.com/site/samsung-75-class-q80d-qled-4k-smart-tv/6165960.p?skuId=6165960",
+    "category": "TVs",
+    "brand": "Samsung",
+    "sku": "6165960",
+    "scraped_at": "2026-03-18T05:54:20.795646+00:00",
+    "raw_payload": {
+      "sku": "6165960",
+      "name": "Samsung - 75\" Class Q80D QLED 4K Smart TV",
+      "regularPrice": 1488.98,
+      "salePrice": 1488.98,
+      "onSale": false,
+      "manufacturer": "Samsung",
+      "modelNumber": "QN75Q80D",
+      "categoryPath": [
+        {
+          "id": "TVs",
+          "name": "TVs"
+        }
+      ],
+      "url": "https://www.bestbuy.com/site/samsung-75-class-q80d-qled-4k-smart-tv/6165960.p?skuId=6165960",
+      "inStoreAvailability": true,
+      "onlineAvailability": true,
+      "customerReviewAverage": 4.4,
+      "customerReviewCount": 2529,
+      "_synthetic": true,
+      "_generated_at": "2026-03-18T05:54:20.795646+00:00"
+    }
+  },
+  {
+    "product_name": "Samsung - 55\" Class QN85D Neo QLED 4K Smart TV",
+    "price": 1092.32,
+    "sale_price": null,
+    "on_sale": false,
+    "source": "bestbuy",
+    "url": "https://www.bestbuy.com/site/samsung-55-class-qn85d-neo-qled-4k-smart-tv/6562024.p?skuId=6562024",
+    "category": "TVs",
+    "brand": "Samsung",
+    "sku": "6562024",
+    "scraped_at": "2026-03-18T05:54:20.795646+00:00",
+    "raw_payload": {
+      "sku": "6562024",
+      "name": "Samsung - 55\" Class QN85D Neo QLED 4K Smart TV",
+      "regularPrice": 1092.32,
+      "salePrice": 1092.32,
+      "onSale": false,
+      "manufacturer": "Samsung",
+      "modelNumber": "QN55QN85D",
+      "categoryPath": [
+        {
+          "id": "TVs",
+          "name": "TVs"
+        }
+      ],
+      "url": "https://www.bestbuy.com/site/samsung-55-class-qn85d-neo-qled-4k-smart-tv/6562024.p?skuId=6562024",
+      "inStoreAvailability": true,
+      "onlineAvailability": true,
+      "customerReviewAverage": 3.7,
+      "customerReviewCount": 1150,
+      "_synthetic": true,
+      "_generated_at": "2026-03-18T05:54:20.795646+00:00"
+    }
+  },
+  {
+    "product_name": "Samsung - 55\" Class QN85D Neo QLED 4K Smart TV",
+    "price": 930.7,
+    "sale_price": null,
+    "on_sale": false,
+    "source": "bestbuy",
+    "url": "https://www.bestbuy.com/site/samsung-55-class-qn85d-neo-qled-4k-smart-tv/6543162.p?skuId=6543162",
+    "category": "TVs",
+    "brand": "Samsung",
+    "sku": "6543162",
+    "scraped_at": "2026-03-18T05:54:20.795646+00:00",
+    "raw_payload": {
+      "sku": "6543162",
+      "name": "Samsung - 55\" Class QN85D Neo QLED 4K Smart TV",
+      "regularPrice": 930.7,
+      "salePrice": 930.7,
+      "onSale": false,
+      "manufacturer": "Samsung",
+      "modelNumber": "QN55QN85D",
+      "categoryPath": [
+        {
+          "id": "TVs",
+          "name": "TVs"
+        }
+      ],
+      "url": "https://www.bestbuy.com/site/samsung-55-class-qn85d-neo-qled-4k-smart-tv/6543162.p?skuId=6543162",
+      "inStoreAvailability": true,
+      "onlineAvailability": true,
+      "customerReviewAverage": 4.6,
+      "customerReviewCount": 2521,
+      "_synthetic": true,
+      "_generated_at": "2026-03-18T05:54:20.795646+00:00"
+    }
+  },
+  {
+    "product_name": "TCL - 55\" Class S4 S-Series LED 4K Smart TV",
+    "price": 323.94,
+    "sale_price": 262.89,
+    "on_sale": true,
+    "source": "bestbuy",
+    "url": "https://www.bestbuy.com/site/tcl-55-class-s4-s-series-led-4k-smart-tv/6695762.p?skuId=6695762",
+    "category": "TVs",
+    "brand": "TCL",
+    "sku": "6695762",
+    "scraped_at": "2026-03-18T05:54:20.795646+00:00",
+    "raw_payload": {
+      "sku": "6695762",
+      "name": "TCL - 55\" Class S4 S-Series LED 4K Smart TV",
+      "regularPrice": 323.94,
+      "salePrice": 262.89,
+      "onSale": true,
+      "manufacturer": "TCL",
+      "modelNumber": "55S450G",
+      "categoryPath": [
+        {
+          "id": "TVs",
+          "name": "TVs"
+        }
+      ],
+      "url": "https://www.bestbuy.com/site/tcl-55-class-s4-s-series-led-4k-smart-tv/6695762.p?skuId=6695762",
+      "inStoreAvailability": true,
+      "onlineAvailability": true,
+      "customerReviewAverage": 3.7,
+      "customerReviewCount": 1886,
+      "_synthetic": true,
+      "_generated_at": "2026-03-18T05:54:20.795646+00:00"
+    }
+  }
+]

@@ -1,0 +1,519 @@
+[
+  {
+    "product_name": "BN59-01315Q Replace Remote for Samsung Neo QLED OLED 4K Smart TV S92C/S94C/QN90",
+    "price": 10.99,
+    "sale_price": null,
+    "on_sale": false,
+    "source": "ebay",
+    "url": "https://www.ebay.com/itm/126574191006?_skw=smart+TV+4K+OLED+QLED&hash=item1d7868e19e:g:7lgAAOSwi2tmkgCX",
+    "category": "TVs",
+    "brand": "Samsung",
+    "sku": "v1|126574191006|0",
+    "scraped_at": "2026-03-20T04:23:14.722811+00:00",
+    "raw_payload": {
+      "itemId": "v1|126574191006|0",
+      "title": "BN59-01315Q Replace Remote for Samsung Neo QLED OLED 4K Smart TV S92C/S94C/QN90",
+      "leafCategoryIds": [
+        "61312"
+      ],
+      "categories": [
+        {
+          "categoryId": "61312",
+          "categoryName": "Remote Controls"
+        },
+        {
+          "categoryId": "293",
+          "categoryName": "Consumer Electronics"
+        },
+        {
+          "categoryId": "14961",
+          "categoryName": "TV, Video & Audio Accessories"
+        },
+        {
+          "categoryId": "32852",
+          "categoryName": "TV, Video & Home Audio"
+        }
+      ],
+      "image": {
+        "imageUrl": "https://i.ebayimg.com/images/g/7lgAAOSwi2tmkgCX/s-l225.jpg"
+      },
+      "price": {
+        "value": "10.99",
+        "currency": "USD"
+      },
+      "itemHref": "https://api.ebay.com/buy/browse/v1/item/v1%7C126574191006%7C0",
+      "seller": {
+        "username": "remote-outlet-discount",
+        "feedbackPercentage": "98.3",
+        "feedbackScore": 45259
+      },
+      "condition": "New",
+      "conditionId": "1000",
+      "thumbnailImages": [
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/7lgAAOSwi2tmkgCX/s-l1600.jpg"
+        }
+      ],
+      "shippingOptions": [
+        {
+          "shippingCostType": "FIXED",
+          "shippingCost": {
+            "value": "0.00",
+            "currency": "USD"
+          },
+          "minEstimatedDeliveryDate": "2026-03-24T07:00:00.000Z",
+          "maxEstimatedDeliveryDate": "2026-03-27T07:00:00.000Z"
+        }
+      ],
+      "buyingOptions": [
+        "FIXED_PRICE"
+      ],
+      "itemAffiliateWebUrl": "https://www.ebay.com/itm/126574191006?_skw=smart+TV+4K+OLED+QLED&hash=item1d7868e19e%3Ag%3A7lgAAOSwi2tmkgCX&mkevt=1&mkcid=1&mkrid=711-53200-19255-0&campid=%253CePNCampaignId%253E&customid=%253CreferenceId%253E&toolid=10049",
+      "itemWebUrl": "https://www.ebay.com/itm/126574191006?_skw=smart+TV+4K+OLED+QLED&hash=item1d7868e19e:g:7lgAAOSwi2tmkgCX",
+      "itemLocation": {
+        "country": "US"
+      },
+      "additionalImages": [
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/0MYAAOSw-TRmkgCW/s-l225.jpg"
+        },
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/jOkAAOSw8uBmkgCW/s-l225.jpg"
+        },
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/VDEAAOSw-F9mkgCX/s-l225.jpg"
+        },
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/uJYAAOSwtNZmkgCX/s-l225.jpg"
+        }
+      ],
+      "adultOnly": false,
+      "legacyItemId": "126574191006",
+      "availableCoupons": false,
+      "itemOriginDate": "2024-07-13T03:44:30.000Z",
+      "itemCreationDate": "2024-07-13T03:44:30.000Z",
+      "topRatedBuyingExperience": false,
+      "priorityListing": false,
+      "listingMarketplaceId": "EBAY_US"
+    }
+  },
+  {
+    "product_name": "BN59-01315Q Replace Remote Control for Samsung OLED 4K TV, Neo QLED 4K Smart TV",
+    "price": 12.99,
+    "sale_price": null,
+    "on_sale": false,
+    "source": "ebay",
+    "url": "https://www.ebay.com/itm/277618795227?_skw=smart+TV+4K+OLED+QLED&hash=item40a35ea2db:g:mb0AAOSwnVJlvIQW",
+    "category": "TVs",
+    "brand": "Samsung",
+    "sku": "v1|277618795227|0",
+    "scraped_at": "2026-03-20T04:23:14.722885+00:00",
+    "raw_payload": {
+      "itemId": "v1|277618795227|0",
+      "title": "BN59-01315Q Replace Remote Control for Samsung OLED 4K TV, Neo QLED 4K Smart TV",
+      "leafCategoryIds": [
+        "61312"
+      ],
+      "categories": [
+        {
+          "categoryId": "61312",
+          "categoryName": "Remote Controls"
+        },
+        {
+          "categoryId": "293",
+          "categoryName": "Consumer Electronics"
+        },
+        {
+          "categoryId": "14961",
+          "categoryName": "TV, Video & Audio Accessories"
+        },
+        {
+          "categoryId": "32852",
+          "categoryName": "TV, Video & Home Audio"
+        }
+      ],
+      "image": {
+        "imageUrl": "https://i.ebayimg.com/images/g/mb0AAOSwnVJlvIQW/s-l225.jpg"
+      },
+      "price": {
+        "value": "12.99",
+        "currency": "USD"
+      },
+      "itemHref": "https://api.ebay.com/buy/browse/v1/item/v1%7C277618795227%7C0",
+      "seller": {
+        "username": "big-saving-usa",
+        "feedbackPercentage": "98.8",
+        "feedbackScore": 54906
+      },
+      "condition": "New",
+      "conditionId": "1000",
+      "thumbnailImages": [
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/mb0AAOSwnVJlvIQW/s-l1600.jpg"
+        }
+      ],
+      "shippingOptions": [
+        {
+          "shippingCostType": "FIXED",
+          "shippingCost": {
+            "value": "0.00",
+            "currency": "USD"
+          },
+          "minEstimatedDeliveryDate": "2026-03-23T07:00:00.000Z",
+          "maxEstimatedDeliveryDate": "2026-03-25T07:00:00.000Z"
+        }
+      ],
+      "buyingOptions": [
+        "FIXED_PRICE",
+        "BEST_OFFER"
+      ],
+      "itemAffiliateWebUrl": "https://www.ebay.com/itm/277618795227?_skw=smart+TV+4K+OLED+QLED&hash=item40a35ea2db%3Ag%3Amb0AAOSwnVJlvIQW&mkevt=1&mkcid=1&mkrid=711-53200-19255-0&campid=%253CePNCampaignId%253E&customid=%253CreferenceId%253E&toolid=10049",
+      "itemWebUrl": "https://www.ebay.com/itm/277618795227?_skw=smart+TV+4K+OLED+QLED&hash=item40a35ea2db:g:mb0AAOSwnVJlvIQW",
+      "itemLocation": {
+        "postalCode": "917**",
+        "country": "US"
+      },
+      "additionalImages": [
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/Aj4AAOSwiBllvIQW/s-l225.jpg"
+        },
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/VoMAAOSwyJplvIQW/s-l225.jpg"
+        },
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/dnAAAOSw-dtlvIQW/s-l225.jpg"
+        }
+      ],
+      "adultOnly": false,
+      "legacyItemId": "277618795227",
+      "availableCoupons": false,
+      "itemOriginDate": "2024-02-02T05:57:04.000Z",
+      "itemCreationDate": "2026-01-01T01:45:15.000Z",
+      "topRatedBuyingExperience": false,
+      "priorityListing": false,
+      "listingMarketplaceId": "EBAY_US"
+    }
+  },
+  {
+    "product_name": "2 TV Remote Control for All Samsung Smart TV UHD Neo QLED OLED 4K 8K Frame Serif",
+    "price": 14.99,
+    "sale_price": null,
+    "on_sale": false,
+    "source": "ebay",
+    "url": "https://www.ebay.com/itm/136928384937?_skw=smart+TV+4K+OLED+QLED&hash=item1fe19157a9:g:NqwAAeSwnKJpXn22",
+    "category": "TVs",
+    "brand": "Samsung",
+    "sku": "v1|136928384937|0",
+    "scraped_at": "2026-03-20T04:23:14.722896+00:00",
+    "raw_payload": {
+      "itemId": "v1|136928384937|0",
+      "title": "2 TV Remote Control for All Samsung Smart TV UHD Neo QLED OLED 4K 8K Frame Serif",
+      "leafCategoryIds": [
+        "61312"
+      ],
+      "categories": [
+        {
+          "categoryId": "61312",
+          "categoryName": "Remote Controls"
+        },
+        {
+          "categoryId": "293",
+          "categoryName": "Consumer Electronics"
+        },
+        {
+          "categoryId": "14961",
+          "categoryName": "TV, Video & Audio Accessories"
+        },
+        {
+          "categoryId": "32852",
+          "categoryName": "TV, Video & Home Audio"
+        }
+      ],
+      "image": {
+        "imageUrl": "https://i.ebayimg.com/images/g/NqwAAeSwnKJpXn22/s-l225.jpg"
+      },
+      "price": {
+        "value": "14.99",
+        "currency": "USD"
+      },
+      "itemHref": "https://api.ebay.com/buy/browse/v1/item/v1%7C136928384937%7C0",
+      "seller": {
+        "username": "kathyopt",
+        "feedbackPercentage": "99.6",
+        "feedbackScore": 6044
+      },
+      "condition": "New",
+      "conditionId": "1000",
+      "thumbnailImages": [
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/NqwAAeSwnKJpXn22/s-l1600.jpg"
+        }
+      ],
+      "shippingOptions": [
+        {
+          "shippingCostType": "FIXED",
+          "shippingCost": {
+            "value": "0.00",
+            "currency": "USD"
+          },
+          "minEstimatedDeliveryDate": "2026-03-23T07:00:00.000Z",
+          "maxEstimatedDeliveryDate": "2026-03-26T07:00:00.000Z"
+        }
+      ],
+      "buyingOptions": [
+        "FIXED_PRICE"
+      ],
+      "itemAffiliateWebUrl": "https://www.ebay.com/itm/136928384937?_skw=smart+TV+4K+OLED+QLED&hash=item1fe19157a9%3Ag%3ANqwAAeSwnKJpXn22&mkevt=1&mkcid=1&mkrid=711-53200-19255-0&campid=%253CePNCampaignId%253E&customid=%253CreferenceId%253E&toolid=10049",
+      "itemWebUrl": "https://www.ebay.com/itm/136928384937?_skw=smart+TV+4K+OLED+QLED&hash=item1fe19157a9:g:NqwAAeSwnKJpXn22",
+      "itemLocation": {
+        "postalCode": "100**",
+        "country": "US"
+      },
+      "additionalImages": [
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/MhYAAeSw1QppXn1l/s-l225.jpg"
+        },
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/uNoAAeSwIURpXn11/s-l225.jpg"
+        },
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/xToAAeSwb99pXn19/s-l225.jpg"
+        },
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/y5YAAeSwzYNpXn2R/s-l225.jpg"
+        },
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/xjIAAeSwIJxpXn2s/s-l225.jpg"
+        },
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/atQAAeSw~eppXn3Q/s-l225.jpg"
+        },
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/Ne0AAeSwCBtpXn3c/s-l225.jpg"
+        },
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/MtMAAeSw2zxpXn32/s-l225.jpg"
+        },
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/L0oAAeSwWP1pXn4u/s-l225.jpg"
+        }
+      ],
+      "adultOnly": false,
+      "legacyItemId": "136928384937",
+      "availableCoupons": false,
+      "itemOriginDate": "2026-01-07T16:14:36.000Z",
+      "itemCreationDate": "2026-01-07T16:14:36.000Z",
+      "topRatedBuyingExperience": true,
+      "priorityListing": false,
+      "listingMarketplaceId": "EBAY_US"
+    }
+  },
+  {
+    "product_name": "Samsung Universal Remote for 4K 8K Smart TVs QLED OLED Frame Serif",
+    "price": 16.18,
+    "sale_price": null,
+    "on_sale": false,
+    "source": "ebay",
+    "url": "https://www.ebay.com/itm/306175838634?_skw=smart+TV+4K+OLED+QLED&hash=item47498089aa:g:Pg0AAOSw-gJn0hZn",
+    "category": "TVs",
+    "brand": "Samsung",
+    "sku": "v1|306175838634|0",
+    "scraped_at": "2026-03-20T04:23:14.722907+00:00",
+    "raw_payload": {
+      "itemId": "v1|306175838634|0",
+      "title": "Samsung Universal Remote for 4K 8K Smart TVs QLED OLED Frame Serif",
+      "leafCategoryIds": [
+        "61312"
+      ],
+      "categories": [
+        {
+          "categoryId": "61312",
+          "categoryName": "Remote Controls"
+        },
+        {
+          "categoryId": "293",
+          "categoryName": "Consumer Electronics"
+        },
+        {
+          "categoryId": "14961",
+          "categoryName": "TV, Video & Audio Accessories"
+        },
+        {
+          "categoryId": "32852",
+          "categoryName": "TV, Video & Home Audio"
+        }
+      ],
+      "image": {
+        "imageUrl": "https://i.ebayimg.com/images/g/Pg0AAOSw-gJn0hZn/s-l225.jpg"
+      },
+      "price": {
+        "value": "16.18",
+        "currency": "USD"
+      },
+      "itemHref": "https://api.ebay.com/buy/browse/v1/item/v1%7C306175838634%7C0",
+      "seller": {
+        "username": "jaha6706",
+        "feedbackPercentage": "99.3",
+        "feedbackScore": 32740
+      },
+      "condition": "New",
+      "conditionId": "1000",
+      "thumbnailImages": [
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/Pg0AAOSw-gJn0hZn/s-l1600.jpg"
+        }
+      ],
+      "shippingOptions": [
+        {
+          "shippingCostType": "FIXED",
+          "shippingCost": {
+            "value": "0.00",
+            "currency": "USD"
+          },
+          "minEstimatedDeliveryDate": "2026-03-23T07:00:00.000Z",
+          "maxEstimatedDeliveryDate": "2026-03-26T07:00:00.000Z"
+        }
+      ],
+      "buyingOptions": [
+        "FIXED_PRICE"
+      ],
+      "itemAffiliateWebUrl": "https://www.ebay.com/itm/306175838634?_skw=smart+TV+4K+OLED+QLED&hash=item47498089aa%3Ag%3APg0AAOSw-gJn0hZn&mkevt=1&mkcid=1&mkrid=711-53200-19255-0&campid=%253CePNCampaignId%253E&customid=%253CreferenceId%253E&toolid=10049",
+      "itemWebUrl": "https://www.ebay.com/itm/306175838634?_skw=smart+TV+4K+OLED+QLED&hash=item47498089aa:g:Pg0AAOSw-gJn0hZn",
+      "itemLocation": {
+        "country": "US"
+      },
+      "additionalImages": [
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/2TQAAOSwGZJn0hZp/s-l225.jpg"
+        },
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/LEgAAOSw05xn0hZo/s-l225.jpg"
+        },
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/BqgAAOSw8b9n0hZs/s-l225.jpg"
+        },
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/z8IAAOSwropn0hZo/s-l225.jpg"
+        },
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/jcoAAOSwLlRn0hZo/s-l225.jpg"
+        },
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/JRYAAOSwB6hn0hZn/s-l225.jpg"
+        }
+      ],
+      "adultOnly": false,
+      "legacyItemId": "306175838634",
+      "availableCoupons": false,
+      "itemOriginDate": "2025-03-12T23:19:09.000Z",
+      "itemCreationDate": "2025-03-12T23:19:09.000Z",
+      "topRatedBuyingExperience": false,
+      "priorityListing": false,
+      "listingMarketplaceId": "EBAY_US"
+    }
+  },
+  {
+    "product_name": "Universal Voice For Samsung Smart TV LED QLED OLED 4K 8K UHD HDR Remote Control",
+    "price": 12.99,
+    "sale_price": null,
+    "on_sale": false,
+    "source": "ebay",
+    "url": "https://www.ebay.com/itm/285731757992?_skw=smart+TV+4K+OLED+QLED&hash=item4286f09fa8:g:5nYAAOSw4e9l2~K2",
+    "category": "TVs",
+    "brand": "Samsung",
+    "sku": "v1|285731757992|0",
+    "scraped_at": "2026-03-20T04:23:14.722915+00:00",
+    "raw_payload": {
+      "itemId": "v1|285731757992|0",
+      "title": "Universal Voice For Samsung Smart TV LED QLED OLED 4K 8K UHD HDR Remote Control",
+      "leafCategoryIds": [
+        "61312"
+      ],
+      "categories": [
+        {
+          "categoryId": "61312",
+          "categoryName": "Remote Controls"
+        },
+        {
+          "categoryId": "293",
+          "categoryName": "Consumer Electronics"
+        },
+        {
+          "categoryId": "14961",
+          "categoryName": "TV, Video & Audio Accessories"
+        },
+        {
+          "categoryId": "32852",
+          "categoryName": "TV, Video & Home Audio"
+        }
+      ],
+      "image": {
+        "imageUrl": "https://i.ebayimg.com/images/g/5nYAAOSw4e9l2~K2/s-l225.jpg"
+      },
+      "price": {
+        "value": "12.99",
+        "currency": "USD"
+      },
+      "itemHref": "https://api.ebay.com/buy/browse/v1/item/v1%7C285731757992%7C0",
+      "seller": {
+        "username": "remote-discount-us",
+        "feedbackPercentage": "98.7",
+        "feedbackScore": 2510
+      },
+      "condition": "New",
+      "conditionId": "1000",
+      "thumbnailImages": [
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/5nYAAOSw4e9l2~K2/s-l1200.jpg"
+        }
+      ],
+      "shippingOptions": [
+        {
+          "shippingCostType": "FIXED",
+          "shippingCost": {
+            "value": "5.00",
+            "currency": "USD"
+          },
+          "minEstimatedDeliveryDate": "2026-03-31T07:00:00.000Z",
+          "maxEstimatedDeliveryDate": "2026-04-06T07:00:00.000Z"
+        }
+      ],
+      "buyingOptions": [
+        "FIXED_PRICE"
+      ],
+      "itemAffiliateWebUrl": "https://www.ebay.com/itm/285731757992?_skw=smart+TV+4K+OLED+QLED&hash=item4286f09fa8%3Ag%3A5nYAAOSw4e9l2%7EK2&mkevt=1&mkcid=1&mkrid=711-53200-19255-0&campid=%253CePNCampaignId%253E&customid=%253CreferenceId%253E&toolid=10049",
+      "itemWebUrl": "https://www.ebay.com/itm/285731757992?_skw=smart+TV+4K+OLED+QLED&hash=item4286f09fa8:g:5nYAAOSw4e9l2~K2",
+      "itemLocation": {
+        "country": "CN"
+      },
+      "additionalImages": [
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/-QQAAOSwZ5Bl2~K2/s-l225.jpg"
+        },
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/DYAAAOSwZxdl2~K3/s-l225.jpg"
+        },
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/JTYAAOSwk~dl2~K5/s-l225.jpg"
+        },
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/8xwAAOSwBmtl2~K6/s-l225.jpg"
+        },
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/Y7QAAOSw9DJl2~K7/s-l225.jpg"
+        },
+        {
+          "imageUrl": "https://i.ebayimg.com/images/g/QpAAAOSwI4Nl2~K8/s-l225.jpg"
+        }
+      ],
+      "adultOnly": false,
+      "legacyItemId": "285731757992",
+      "availableCoupons": false,
+      "itemOriginDate": "2024-02-26T02:09:01.000Z",
+      "itemCreationDate": "2024-02-26T02:09:01.000Z",
+      "topRatedBuyingExperience": false,
+      "priorityListing": false,
+      "listingMarketplaceId": "EBAY_US"
+    }
+  }
+]

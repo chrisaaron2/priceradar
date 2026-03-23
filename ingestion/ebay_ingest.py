@@ -50,16 +50,48 @@ CATEGORY_MAP: dict[str, str] = {
     "Tablets": "171485",       # Tablets & eBook Readers
 }
 
-# Search keywords per category to improve result relevance
-CATEGORY_KEYWORDS: dict[str, str] = {
-    "TVs": "smart TV 4K OLED QLED",
-    "Laptops": "laptop notebook",
-    "Headphones": "wireless noise cancelling headphones earbuds",
-    "Smartwatches": "smartwatch GPS fitness",
-    "Tablets": "tablet iPad Galaxy Tab",
+# Search keywords per category — brand-specific to find matchable products
+# Generic searches return cheap no-name products that never match Best Buy inventory
+CATEGORY_KEYWORDS: dict[str, list[str]] = {
+    "TVs": [
+        "Samsung QLED 4K Smart TV",
+        "LG OLED 4K Smart TV",
+        "Sony BRAVIA 4K Smart TV",
+        "TCL QLED 4K Smart TV",
+        "Hisense Mini-LED Smart TV",
+    ],
+    "Laptops": [
+        "Apple MacBook Air M3",
+        "Apple MacBook Pro M4",
+        "Dell XPS laptop",
+        "HP OMEN gaming laptop",
+        "Lenovo ThinkPad X1 Carbon",
+        "ASUS ROG Strix gaming laptop",
+    ],
+    "Headphones": [
+        "Sony WH-1000XM5",
+        "Apple AirPods Pro",
+        "Apple AirPods Max",
+        "Bose QuietComfort Ultra",
+        "Samsung Galaxy Buds3 Pro",
+        "Sennheiser Momentum 4",
+    ],
+    "Smartwatches": [
+        "Apple Watch Series 10",
+        "Apple Watch Ultra 2",
+        "Samsung Galaxy Watch7",
+        "Google Pixel Watch 3",
+        "Garmin Venu 3",
+    ],
+    "Tablets": [
+        "Apple iPad Pro M4",
+        "Apple iPad Air M2",
+        "Samsung Galaxy Tab S10",
+        "Microsoft Surface Pro",
+    ],
 }
 
-MAX_ITEMS_PER_CATEGORY = 200
+MAX_ITEMS_PER_CATEGORY = 50  # Fewer items per search but more targeted
 ITEMS_PER_PAGE = 50  # eBay max per page for Browse API
 RATE_LIMIT_DELAY = 0.5  # seconds between requests
 
@@ -326,35 +358,38 @@ def save_to_postgres(listings: list[dict[str, Any]]) -> int:
         return 0
 
 
-def main(max_items_per_category: int = MAX_ITEMS_PER_CATEGORY) -> None:
+def main(max_items_per_keyword: int = MAX_ITEMS_PER_CATEGORY) -> None:
     """
-    Main entry point: fetch from all eBay categories, save to S3 + Postgres.
-
-    Args:
-        max_items_per_category: Maximum items to fetch per category.
+    Main entry point: fetch from all eBay categories using brand-specific
+    searches, save to S3 + Postgres.
     """
-    logger.info("Starting eBay ingestion")
+    logger.info("Starting eBay ingestion (brand-specific search)")
 
     all_raw_items: list[dict[str, Any]] = []
     all_parsed_listings: list[dict[str, Any]] = []
 
     for category_name, category_id in CATEGORY_MAP.items():
-        keywords = CATEGORY_KEYWORDS[category_name]
-        logger.info("Fetching %s (category_id=%s, keywords='%s')",
-                     category_name, category_id, keywords)
+        keyword_list = CATEGORY_KEYWORDS[category_name]
+        category_items: list[dict[str, Any]] = []
 
-        raw_items = search_category(
-            category_name=category_name,
-            category_id=category_id,
-            keywords=keywords,
-            max_items=max_items_per_category,
-        )
-        all_raw_items.extend(raw_items)
+        for keywords in keyword_list:
+            logger.info("Fetching %s — '%s' (category_id=%s)",
+                         category_name, keywords, category_id)
 
-        parsed = [parse_ebay_item(item, category_name) for item in raw_items]
-        all_parsed_listings.extend(parsed)
+            raw_items = search_category(
+                category_name=category_name,
+                category_id=category_id,
+                keywords=keywords,
+                max_items=max_items_per_keyword,
+            )
+            all_raw_items.extend(raw_items)
 
-        logger.info("Fetched and parsed %d items for %s", len(parsed), category_name)
+            parsed = [parse_ebay_item(item, category_name) for item in raw_items]
+            category_items.extend(parsed)
+
+        all_parsed_listings.extend(category_items)
+        logger.info("Fetched %d total items for %s (%d brand searches)",
+                     len(category_items), category_name, len(keyword_list))
 
     # Save raw JSON to S3
     s3_path = save_to_s3(all_raw_items)
@@ -372,7 +407,7 @@ def main(max_items_per_category: int = MAX_ITEMS_PER_CATEGORY) -> None:
     )
     os.makedirs(os.path.dirname(local_path), exist_ok=True)
     with open(local_path, "w") as f:
-        json.dump(all_parsed_listings[:5], f, indent=2, default=str)
+        json.dump(all_parsed_listings[:10], f, indent=2, default=str)
     logger.info("Saved sample fixtures to %s", local_path)
 
     logger.info("eBay ingestion complete — %d total listings across %d categories",

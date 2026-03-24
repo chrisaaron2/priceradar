@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: staging
+    database: priceradar-490621
+    schema: priceradar_warehouse
+    tables:
+      - name: raw_listings
+      - name: raw_matched_products

@@ -1,0 +1,39 @@
+version: 2
+
+models:
+  - name: dim_product
+    columns:
+      - name: product_key
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_source
+    columns:
+      - name: source_key
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_time
+    columns:
+      - name: time_key
+        tests:
+          - unique
+          - not_null
+
+  - name: dim_category
+    columns:
+      - name: category_key
+        tests:
+          - unique
+          - not_null
+
+  - name: fact_price_snapshot
+    columns:
+      - name: snapshot_id
+        tests:
+          - not_null
+      - name: product_key
+        tests:
+          - not_null

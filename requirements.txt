@@ -5,13 +5,15 @@
 
 # --- Track A: Upstream Pipeline (Chris) ---
 boto3>=1.34.0                # AWS S3 operations
-sqlalchemy>=2.0.0            # PostgreSQL ORM
+sqlalchemy>=1.4.0            # PostgreSQL ORM
 psycopg2-binary>=2.9.0       # PostgreSQL driver
 requests>=2.31.0             # HTTP client for API calls
 pyspark>=3.5.0               # Spark processing (local mode)
 anthropic>=0.40.0            # Anthropic API for SKU matching
 pydantic>=2.0.0              # Structured output schemas
 python-dotenv>=1.0.0         # Load .env files
+pandas>=2.2.0
+pyarrow>=14.0.0
 
 # --- Track B: Downstream Analytics (Punith) ---
 # google-cloud-bigquery>=3.0.0

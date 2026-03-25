@@ -1,9 +1,9 @@
-# PriceRadar Docker Compose
-# PostgreSQL (Chris - Track A)
-# Metabase, MLflow, FastAPI (Punith - Track B)
-# SHARED FILE: Coordinate via PR before editing
+# PriceRadar Docker Compose — Full Stack
+# All services on shared network with healthchecks
+# docker-compose up -d starts everything
 
 services:
+  # --- PostgreSQL (Chris - Track A) ---
   postgres:
     image: postgres:15
     container_name: priceradar-postgres
@@ -25,6 +25,7 @@ services:
     networks:
       - priceradar-network
 
+  # --- Metabase (Punith - Track B) ---
   metabase:
     image: metabase/metabase:latest
     container_name: priceradar-metabase
@@ -37,19 +38,62 @@ services:
     volumes:
       - metabase-data:/metabase-data
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     networks:
       - priceradar-network
 
+  # --- MLflow (Punith - Track B) ---
   mlflow:
     image: ghcr.io/mlflow/mlflow:latest
     container_name: priceradar-mlflow
     restart: unless-stopped
     ports:
       - "5000:5000"
-    command: mlflow server --host 0.0.0.0 --port 5000
+    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlflow-data/mlflow.db --default-artifact-root /mlflow-data/artifacts
     volumes:
-      - mlflow-data:/mlflow
+      - mlflow-data:/mlflow-data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - priceradar-network
+
+  # --- FastAPI (Punith - Track B) ---
+  fastapi:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    container_name: priceradar-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-priceradar}
+      POSTGRES_USER: ${POSTGRES_USER:-priceradar}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-priceradar_dev}
+      GCP_PROJECT_ID: ${GCP_PROJECT_ID:-}
+      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
     networks:
       - priceradar-network
 

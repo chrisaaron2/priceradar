@@ -1,29 +1,26 @@
 """
-PriceRadar - Airflow DAG
+PriceRadar - Airflow DAG (Production-Ready)
 
-Orchestrates the full data pipeline:
+Orchestrates the full data pipeline end-to-end:
 1. Ingest from eBay + Best Buy (parallel)
 2. Spark processing (dedup, normalize, clean Parquet)
-3. SKU matching via LLM (Day 3 — placeholder)
-4. Load to BigQuery (Punith's code — placeholder)
-5. dbt run (Punith's models — placeholder)
+3. LLM SKU matching via Groq/Llama 3.3 70B
+4. Load to BigQuery (Punith's code)
+5. dbt run (Punith's star schema models)
 
 Schedule: Every 6 hours
 Owner: Chris (Track A)
-
-Tasks 3-5 are placeholder operators that will be enabled as the
-corresponding code is ready. This lets us test the DAG structure
-now and incrementally enable tasks.
+Tasks 4-5 call Punith's Track B code.
 """
 
 from datetime import datetime, timedelta
 from pathlib import Path
+import subprocess
 import sys
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.operators.bash import BashOperator
-from airflow.operators.empty import EmptyOperator
 
 # Add project root to path so we can import our modules
 PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
@@ -44,7 +41,7 @@ default_args = {
 }
 
 # ---------------------------------------------------------------------------
-# Task Callables
+# Task Callables — Track A (Chris)
 # ---------------------------------------------------------------------------
 def run_bestbuy_ingest():
     """Run synthetic Best Buy data generation."""
@@ -53,9 +50,9 @@ def run_bestbuy_ingest():
 
 
 def run_ebay_ingest():
-    """Run eBay Browse API ingestion."""
+    """Run eBay Browse API ingestion with brand-specific searches."""
     from ingestion.ebay_ingest import main
-    main(max_items_per_category=200)
+    main(max_items_per_keyword=50)
 
 
 def run_spark_processing():
@@ -64,20 +61,22 @@ def run_spark_processing():
     main()
 
 
-# Placeholder callables for future tasks
 def run_sku_matching():
-    """Placeholder: LLM SKU matching (Day 3)."""
-    print("SKU matching task — not yet implemented. Enable in Day 3.")
+    """Run LLM SKU matching via Groq/Llama 3.3 70B."""
+    from llm.sku_matcher import main
+    main(max_pairs=50)
 
 
+# ---------------------------------------------------------------------------
+# Task Callables — Track B (Punith)
+# ---------------------------------------------------------------------------
 def run_load_bigquery():
-    """Placeholder: BigQuery loading (Punith's code)."""
-    print("BigQuery load task — Punith's ingestion/load_to_bigquery.py. Enable when ready.")
-
-
-def run_dbt():
-    """Placeholder: dbt run (Punith's models)."""
-    print("dbt run task — Punith's dbt models. Enable when ready.")
+    """
+    Load data from PostgreSQL to BigQuery.
+    Calls Punith's ingestion/load_to_bigquery.py.
+    """
+    from ingestion.load_to_bigquery import main
+    main()
 
 
 # ---------------------------------------------------------------------------
@@ -86,10 +85,10 @@ def run_dbt():
 with DAG(
     dag_id="priceradar_ingestion",
     default_args=default_args,
-    description="PriceRadar data pipeline: ingest → process → match → load → transform",
+    description="PriceRadar: ingest → process → match → load → transform",
     schedule=timedelta(hours=6),
     start_date=datetime(2026, 3, 18),
-    catchup=False,  # Don't backfill past runs
+    catchup=False,
     tags=["priceradar", "ingestion", "pipeline"],
     doc_md="""
     ## PriceRadar Data Pipeline
@@ -103,14 +102,13 @@ with DAG(
     [ingest_ebay] ────┘
     ```
 
-    **Owners:**
-    - Tasks 1-3: Chris (Track A — Pipeline)
-    - Tasks 4-5: Punith (Track B — Analytics)
+    **Track A (Chris):** Tasks 1-3 (ingestion, Spark, LLM matching)
+    **Track B (Punith):** Tasks 4-5 (BigQuery loading, dbt models)
     """,
 ) as dag:
 
     # -----------------------------------------------------------------------
-    # Task 1 & 2: Ingestion (parallel)
+    # Task 1 & 2: Ingestion (parallel) — Chris
     # -----------------------------------------------------------------------
     ingest_bestbuy = PythonOperator(
         task_id="ingest_bestbuy",
@@ -125,7 +123,7 @@ with DAG(
     )
 
     # -----------------------------------------------------------------------
-    # Task 3: Spark Processing (after both ingestions)
+    # Task 3: Spark Processing — Chris
     # -----------------------------------------------------------------------
     spark_processing = PythonOperator(
         task_id="spark_processing",
@@ -134,34 +132,33 @@ with DAG(
     )
 
     # -----------------------------------------------------------------------
-    # Task 4: LLM SKU Matching (Day 3 — placeholder)
+    # Task 4: LLM SKU Matching — Chris
     # -----------------------------------------------------------------------
     sku_matching = PythonOperator(
         task_id="sku_matching",
         python_callable=run_sku_matching,
-        doc_md="LLM cross-marketplace product matching (Day 3)",
+        doc_md="Groq/Llama 3.3 70B cross-marketplace product matching with Pydantic structured output",
     )
 
     # -----------------------------------------------------------------------
-    # Task 5: Load to BigQuery (Punith's code — placeholder)
+    # Task 5: Load to BigQuery — Punith
     # -----------------------------------------------------------------------
     load_bigquery = PythonOperator(
         task_id="load_bigquery",
         python_callable=run_load_bigquery,
-        doc_md="Load clean Parquet + matched products to BigQuery (Punith)",
+        doc_md="Load raw_listings + matched_products from Postgres to BigQuery staging tables",
     )
 
     # -----------------------------------------------------------------------
-    # Task 6: dbt Run (Punith's models — placeholder)
+    # Task 6: dbt Run — Punith
     # -----------------------------------------------------------------------
-    dbt_run = PythonOperator(
+    dbt_run = BashOperator(
         task_id="dbt_run",
-        python_callable=run_dbt,
-        doc_md="Run dbt models to build star schema in BigQuery (Punith)",
+        bash_command="cd /usr/local/airflow/dbt/priceradar && dbt run --full-refresh",
+        doc_md="Run dbt models to build star schema in BigQuery (fact + dim tables)",
     )
 
     # -----------------------------------------------------------------------
     # Task Dependencies
     # -----------------------------------------------------------------------
-    # Ingestion runs in parallel, then Spark, then sequential downstream
     [ingest_bestbuy, ingest_ebay] >> spark_processing >> sku_matching >> load_bigquery >> dbt_run

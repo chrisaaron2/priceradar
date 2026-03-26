@@ -12,7 +12,7 @@
 
 > Monitors competitor pricing across eBay and Best Buy, normalizes product SKUs using LLM-powered matching, and surfaces pricing intelligence through dashboards, ML models, and an API — the scaled-down equivalent of what enterprise tools like [Competera](https://competera.net) and [Prisync](https://prisync.com) sell to retailers.
 
-**Built ** by [Chris Aaron](https://github.com/chrisaaron2) and Punith as an NJIT MS Data Science portfolio project.
+Built by [Chris Aaron](https://github.com/chrisaaron2) and Punith as an NJIT MS Data Science portfolio project.
 
 ---
 

@@ -415,9 +415,7 @@ def generate_all_history(days: int = 30) -> list[dict[str, Any]]:
 
 def main(days: int = 30) -> None:
     """Generate and load synthetic historical price data."""
-    logger.info("=" * 60)
     logger.info("Generating %d days of synthetic price history", days)
-    logger.info("=" * 60)
 
     listings = generate_all_history(days=days)
 
@@ -431,7 +429,6 @@ def main(days: int = 30) -> None:
         logger.info("S3: %s", s3_path)
 
     # Summary
-    logger.info("=" * 60)
     logger.info("Historical data generation complete!")
     logger.info("  Total rows: %d", count)
     logger.info("  Date range: %d days", days)
@@ -440,7 +437,6 @@ def main(days: int = 30) -> None:
         sum(len(v) for v in PRODUCT_CATALOG.values()),
         sum(len(v) for v in EBAY_VARIANTS.values()),
     )
-    logger.info("=" * 60)
 
 
 if __name__ == "__main__":

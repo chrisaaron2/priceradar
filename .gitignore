@@ -46,3 +46,9 @@ Thumbs.db
 
 # Local credentials
 include/*.json
+
+# AI assistant files (kept local, not part of the project)
+.claude/
+CLAUDE.md
+Claude outputs/
+dbt/priceradar/.user.yml

@@ -160,9 +160,7 @@ class Listing:
     brand: str | None
 
 
-# ---------------------------------------------------------------------------
 # Candidate scoring (pure functions, unit-tested)
-# ---------------------------------------------------------------------------
 def normalize_title(title: str) -> str:
     """Lower-case, join hyphenated model numbers, drop punctuation and noise words."""
     t = title.lower().replace('"', " inch ").replace("”", " inch ")
@@ -251,9 +249,7 @@ def shortlist(
     return scored[:max_candidates]
 
 
-# ---------------------------------------------------------------------------
 # Database access
-# ---------------------------------------------------------------------------
 LATEST_TITLES_SQL = text(
     """
     SELECT DISTINCT ON (source, category, product_name)
@@ -329,9 +325,7 @@ def save_match(engine, pair: ProductPair, match: SKUMatch) -> None:
         )
 
 
-# ---------------------------------------------------------------------------
 # LLM call
-# ---------------------------------------------------------------------------
 def build_user_message(pair: ProductPair) -> str:
     def price(p: float | None) -> str:
         return f"\n  Price: ${p:.2f}" if p else ""
@@ -389,9 +383,7 @@ def match_pair_with_llm(client, pair: ProductPair) -> SKUMatch | None:
     return None
 
 
-# ---------------------------------------------------------------------------
 # Entry point
-# ---------------------------------------------------------------------------
 def main(max_pairs: int = MAX_PAIRS_PER_RUN) -> dict[str, int]:
     """Run one matching pass. Returns counts of pairs judged, matches and failures."""
     api_key = os.getenv("GROQ_API_KEY")

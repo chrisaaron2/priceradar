@@ -1,9 +1,8 @@
-# PriceRadar Docker Compose — Full Stack
-# All services on shared network with healthchecks
-# docker-compose up -d starts everything
+# PriceRadar local stack: Postgres, the ShopGPT API, Metabase and MLflow.
+# Airflow runs separately with `astro dev start` (see README).
 
 services:
-  # --- PostgreSQL (Chris - Track A) ---
+  # Staging database: raw_listings, matched_products, tracked_products
   postgres:
     image: postgres:15
     container_name: priceradar-postgres
@@ -25,7 +24,7 @@ services:
     networks:
       - priceradar-network
 
-  # --- Metabase (Punith - Track B) ---
+  # Dashboards on the BigQuery warehouse
   metabase:
     image: metabase/metabase:latest
     container_name: priceradar-metabase
@@ -49,7 +48,7 @@ services:
     networks:
       - priceradar-network
 
-  # --- MLflow (Punith - Track B) ---
+  # Experiment tracking for the ML jobs
   mlflow:
     image: ghcr.io/mlflow/mlflow:latest
     container_name: priceradar-mlflow
@@ -68,7 +67,7 @@ services:
     networks:
       - priceradar-network
 
-  # --- FastAPI (Punith - Track B) ---
+  # ShopGPT API
   fastapi:
     build:
       context: .
@@ -84,7 +83,13 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-priceradar}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-priceradar_dev}
       GCP_PROJECT_ID: ${GCP_PROJECT_ID:-}
-      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-}
+      BQ_DATASET: ${BQ_DATASET:-priceradar_warehouse}
+      GOOGLE_APPLICATION_CREDENTIALS: /app/include/gcp-key.json
+      API_KEY: ${API_KEY:-}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
+    volumes:
+      # Mount the folder, not the file, so the API still starts before the key exists.
+      - ./include:/app/include:ro
     depends_on:
       postgres:
         condition: service_healthy

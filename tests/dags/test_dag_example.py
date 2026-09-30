@@ -4,7 +4,10 @@ import os
 import logging
 from contextlib import contextmanager
 import pytest
-from airflow.models import DagBag
+
+pytest.importorskip("airflow")
+
+from airflow.models import DagBag  # noqa: E402
 
 
 @contextmanager
@@ -59,9 +62,7 @@ def test_file_imports(rel_path, rv):
 APPROVED_TAGS = {}
 
 
-@pytest.mark.parametrize(
-    "dag_id,dag,fileloc", get_dags(), ids=[x[2] for x in get_dags()]
-)
+@pytest.mark.parametrize("dag_id,dag,fileloc", get_dags(), ids=[x[2] for x in get_dags()])
 def test_dag_tags(dag_id, dag, fileloc):
     """
     test if a DAG is tagged and if those TAGs are in the approved list
@@ -71,13 +72,11 @@ def test_dag_tags(dag_id, dag, fileloc):
         assert not set(dag.tags) - APPROVED_TAGS
 
 
-@pytest.mark.parametrize(
-    "dag_id,dag, fileloc", get_dags(), ids=[x[2] for x in get_dags()]
-)
+@pytest.mark.parametrize("dag_id,dag, fileloc", get_dags(), ids=[x[2] for x in get_dags()])
 def test_dag_retries(dag_id, dag, fileloc):
     """
     test if a DAG has retries set
     """
-    assert (
-        dag.default_args.get("retries", None) >= 2
-    ), f"{dag_id} in {fileloc} must have task retries >= 2."
+    assert dag.default_args.get("retries", None) >= 2, (
+        f"{dag_id} in {fileloc} must have task retries >= 2."
+    )

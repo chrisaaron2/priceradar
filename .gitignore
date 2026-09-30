@@ -43,3 +43,6 @@ Thumbs.db
 
 # GCP credentials (never commit)
 *service-account*.json
+
+# Local credentials
+include/*.json

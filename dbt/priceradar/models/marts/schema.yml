@@ -2,38 +2,73 @@ version: 2
 
 models:
   - name: dim_product
+    description: One row per real-world product, merged across marketplaces using LLM matches.
     columns:
       - name: product_key
-        tests:
-          - unique
-          - not_null
+        tests: [unique, not_null]
+      - name: canonical_name
+        tests: [not_null]
+      - name: source_count
+        description: Number of marketplaces that list this product.
+        tests: [not_null]
 
   - name: dim_source
+    description: One row per marketplace.
     columns:
       - name: source_key
+        tests: [unique, not_null]
+      - name: marketplace_name
         tests:
           - unique
-          - not_null
+          - accepted_values:
+              arguments:
+                values: [ebay, bestbuy]
 
   - name: dim_time
+    description: One row per scrape timestamp.
     columns:
       - name: time_key
-        tests:
-          - unique
-          - not_null
+        tests: [unique, not_null]
 
   - name: dim_category
+    description: One row per product category.
     columns:
       - name: category_key
-        tests:
-          - unique
-          - not_null
+        tests: [unique, not_null]
+      - name: category_name
+        tests: [unique, not_null]
 
   - name: fact_price_snapshot
+    description: One row per observed listing price.
     columns:
       - name: snapshot_id
-        tests:
-          - not_null
+        tests: [unique, not_null]
       - name: product_key
         tests:
           - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_product')
+                field: product_key
+      - name: source_key
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_source')
+                field: source_key
+      - name: time_key
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_time')
+                field: time_key
+      - name: effective_price
+        tests: [not_null]
+      - name: discount_pct
+        tests:
+          - dbt_utils.accepted_range:
+              arguments:
+                min_value: 0
+                max_value: 100

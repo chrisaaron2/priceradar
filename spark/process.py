@@ -26,9 +26,7 @@ load_dotenv()
 
 logger = get_logger("spark_process")
 
-# ---------------------------------------------------------------------------
 # Configuration
-# ---------------------------------------------------------------------------
 POSTGRES_JDBC_URL = (
     f"jdbc:postgresql://"
     f"{os.getenv('POSTGRES_HOST', 'localhost')}:"
@@ -317,41 +315,27 @@ def main() -> None:
     4. Standardize categories across sources
     5. Normalize brand names
     6. Add computed columns (price_bucket)
-    7. Write clean Parquet to S3
+    7. Write clean Parquet (S3 if configured, else local disk)
     """
-    logger.info("=" * 60)
     logger.info("Starting PriceRadar Spark processing")
-    logger.info("=" * 60)
 
     spark = create_spark_session()
 
     try:
-        # Step 1: Read
         df_raw = read_from_postgres(spark)
 
         if df_raw.count() == 0:
             logger.warning("No data in raw_listings — nothing to process")
             return
 
-        # Step 2: Deduplicate
         df_deduped = deduplicate(df_raw)
-
-        # Step 3: Normalize prices
         df_prices = normalize_prices(df_deduped)
-
-        # Step 4: Standardize categories
         df_categories = standardize_categories(df_prices)
-
-        # Step 5: Normalize brands
         df_brands = normalize_brands(df_categories)
-
-        # Step 6: Add computed columns
         df_enriched = add_computed_columns(df_brands)
-
-        # Step 7: Select output columns matching handoff contract
         df_output = select_output_columns(df_enriched)
 
-        # Step 8: Write Parquet to S3, or locally when no bucket is configured
+        # S3 if a bucket is configured, local disk otherwise
         from common.storage import bucket_name
 
         if bucket_name():
@@ -364,9 +348,7 @@ def main() -> None:
             logger.info("S3_BUCKET_NAME not set; writing Parquet locally")
             logger.info("Local output: %s", write_to_local(df_output))
 
-        # Summary
-        logger.info("=" * 60)
-        logger.info("Processing complete!")
+        logger.info("Processing complete")
         logger.info("  Input rows:  %d", df_raw.count())
         logger.info("  Output rows: %d", df_output.count())
         logger.info(
@@ -376,7 +358,6 @@ def main() -> None:
             "  Categories: %s",
             [r["category"] for r in df_output.select("category").distinct().collect()],
         )
-        logger.info("=" * 60)
 
     finally:
         spark.stop()

@@ -83,9 +83,7 @@ def require_api_key(x_api_key: Annotated[str | None, Header()] = None) -> None:
 Protected = [Depends(require_api_key)]
 
 
-# ---------------------------------------------------------------------------
 # Response models
-# ---------------------------------------------------------------------------
 class HealthResponse(BaseModel):
     status: str
     timestamp: dt.datetime
@@ -168,9 +166,7 @@ class TrackedProduct(BaseModel):
     created_at: dt.datetime
 
 
-# ---------------------------------------------------------------------------
 # BigQuery helper
-# ---------------------------------------------------------------------------
 def run_query(sql: str, params: dict | None = None) -> list[dict]:
     from google.cloud import bigquery
 
@@ -186,9 +182,7 @@ def run_query(sql: str, params: dict | None = None) -> list[dict]:
     return [dict(row) for row in rows]
 
 
-# ---------------------------------------------------------------------------
 # Endpoints
-# ---------------------------------------------------------------------------
 @app.get("/health", response_model=HealthResponse)
 def health() -> HealthResponse:
     bq_ok = pg_ok = False

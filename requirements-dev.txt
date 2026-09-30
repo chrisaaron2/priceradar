@@ -1,0 +1,6 @@
+# Tests and linting
+-r requirements-api.txt
+requests>=2.31,<3
+pytest>=8,<10
+httpx>=0.27,<1
+ruff>=0.6

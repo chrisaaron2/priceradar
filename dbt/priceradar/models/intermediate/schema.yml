@@ -1,0 +1,19 @@
+version: 2
+
+models:
+  - name: int_listing_products
+    description: >
+      Maps each distinct (marketplace, listing title) to a product_key. eBay titles with an
+      accepted LLM match share the product_key of the Best Buy title they matched.
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          arguments:
+            combination_of_columns: [marketplace_source, product_name]
+    columns:
+      - name: product_key
+        tests: [not_null]
+      - name: anchor_source
+        tests:
+          - accepted_values:
+              arguments:
+                values: [ebay, bestbuy]

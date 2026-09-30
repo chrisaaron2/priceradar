@@ -2,8 +2,25 @@ version: 2
 
 sources:
   - name: staging
-    database: priceradar-490621
-    schema: priceradar_warehouse
+    description: Raw tables copied from Postgres by ingestion/load_to_bigquery.py.
+    database: "{{ env_var('GCP_PROJECT_ID') }}"
+    schema: "{{ env_var('BQ_DATASET', 'priceradar_warehouse') }}"
     tables:
       - name: raw_listings
+        description: One row per listing per scrape, from every marketplace.
+        config:
+          loaded_at_field: scraped_at
+          freshness:
+            warn_after: {count: 12, period: hour}
+            error_after: {count: 24, period: hour}
+        columns:
+          - name: id
+            tests: [unique, not_null]
+          - name: source
+            tests:
+              - not_null
       - name: raw_matched_products
+        description: One row per (eBay listing, Best Buy listing) pair judged by the LLM matcher.
+        columns:
+          - name: id
+            tests: [unique, not_null]

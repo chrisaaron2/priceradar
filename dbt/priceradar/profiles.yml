@@ -1,0 +1,15 @@
+# Read by dbt when run from this directory (or with --profiles-dir).
+# Everything comes from environment variables so no credentials live in the repo.
+priceradar:
+  target: "{{ env_var('DBT_TARGET', 'dev') }}"
+  outputs:
+    dev:
+      type: bigquery
+      method: service-account
+      keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS') }}"
+      project: "{{ env_var('GCP_PROJECT_ID') }}"
+      dataset: "{{ env_var('BQ_DATASET', 'priceradar_warehouse') }}"
+      location: US
+      threads: 4
+      job_execution_timeout_seconds: 300
+      job_retries: 1

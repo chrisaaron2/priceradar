@@ -1,13 +1,24 @@
 [project]
 name = "priceradar"
-version = "0.1.0"
-description = "B2B Competitive Pricing Intelligence Platform"
+version = "1.1.0"
+description = "PriceRadar: the cross-marketplace price pipeline behind ShopGPT"
 readme = "README.md"
-license = {text = "MIT"}
+license = { text = "MIT" }
 requires-python = ">=3.11"
-
-[tool.black]
-line-length = 100
 
 [tool.ruff]
 line-length = 100
+target-version = "py311"
+extend-exclude = ["dbt/priceradar/dbt_packages", "dbt/priceradar/target"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
+filterwarnings = [
+    # Raised by fastapi.testclient on newer Starlette; not our code.
+    "ignore:Using .httpx. with .starlette.testclient. is deprecated",
+]

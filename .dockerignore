@@ -6,3 +6,9 @@ logs/
 .venv
 airflow.db
 airflow.cfg
+data_dump.sql
+output/
+**/__pycache__
+dbt/priceradar/target
+dbt/priceradar/dbt_packages
+dbt/priceradar/logs

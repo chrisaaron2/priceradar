@@ -1,15 +1,18 @@
-Welcome to your new dbt project!
+# PriceRadar dbt project
 
-### Using the starter project
+Builds the BigQuery star schema from the raw tables that `ingestion/load_to_bigquery.py` loads.
 
-Try running the following commands:
-- dbt run
-- dbt test
+```
+staging        stg_listings, stg_matched          (views over the raw tables)
+intermediate   int_listing_products               (listing title -> product_key, from LLM matches)
+marts          fact_price_snapshot, dim_product, dim_source, dim_time, dim_category
+```
 
+Run from this directory. `profiles.yml` reads `GCP_PROJECT_ID`, `BQ_DATASET` and
+`GOOGLE_APPLICATION_CREDENTIALS` from the environment.
 
-### Resources:
-- Learn more about dbt [in the docs](https://docs.getdbt.com/docs/introduction)
-- Check out [Discourse](https://discourse.getdbt.com/) for commonly asked questions and answers
-- Join the [chat](https://community.getdbt.com/) on Slack for live discussions and support
-- Find [dbt events](https://events.getdbt.com) near you
-- Check out [the blog](https://blog.getdbt.com/) for the latest news on dbt's development and best practices
+```bash
+dbt deps
+dbt build                 # run models + tests
+dbt source freshness      # warn if no new listings in 12 hours
+```

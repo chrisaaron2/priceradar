@@ -1,16 +1,23 @@
+-- One row per marketplace.
 with sources as (
-    select distinct
-        marketplace_source
-    from {{ ref('stg_listings') }}
-),
-
-final as (
     select
-        {{ dbt_utils.generate_surrogate_key(['marketplace_source']) }} as source_key,
-        marketplace_source as marketplace_name,
-        cast(null as string) as listing_url,
-        cast(null as float64) as seller_rating
-    from sources
+        marketplace_source,
+        logical_or(is_synthetic) as has_synthetic_data
+    from {{ ref('stg_listings') }}
+    group by marketplace_source
 )
 
-select * from final
+select
+    {{ dbt_utils.generate_surrogate_key(['marketplace_source']) }} as source_key,
+    marketplace_source as marketplace_name,
+    case marketplace_source
+        when 'ebay' then 'eBay'
+        when 'bestbuy' then 'Best Buy'
+        else marketplace_source
+    end as display_name,
+    case marketplace_source
+        when 'ebay' then 'https://www.ebay.com'
+        when 'bestbuy' then 'https://www.bestbuy.com'
+    end as base_url,
+    has_synthetic_data
+from sources

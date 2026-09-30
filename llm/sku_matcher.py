@@ -1,250 +1,326 @@
 """
-PriceRadar - LLM SKU Matching Layer (Groq + Llama 3.3 70B)
+PriceRadar - LLM product matching (GPT-OSS 120B on Groq).
 
-Uses Groq's ultra-fast inference API with Llama 3.3 70B to determine
-whether products from eBay and Best Buy are the same item.
+Decides which eBay listings are the same physical product as a Best Buy catalog item.
 
-Why Groq: Runs Llama 3.3 70B on custom LPU hardware with millisecond
-latency. Free tier allows 30 RPM — enough to process all pairs in
-a single run. No cloud API costs.
+1. Work on distinct titles, not rows. The same title is scraped every run, so each
+   (eBay title, Best Buy title) pair is judged once and the verdict is reused.
+2. Skip eBay titles that are accessories or packaging ("case for ...", "box only").
+   For each remaining eBay title that has no accepted match yet, shortlist Best Buy titles in the
+   same category and brand by a cheap text score (normalized title similarity plus a
+   bonus for a shared model number).
+3. Ask the LLM about the most promising pairs first, stopping at the first match for
+   each eBay title, until the per-run budget is spent.
+4. Store every verdict in `matched_products`. dbt uses the confident matches to build
+   `dim_product`.
 
-This is INFERENCE/CLASSIFICATION only — no eBay data is used to train
-or fine-tune any AI model. This complies with eBay's June 2025 API
-License Agreement.
-
-Owner: Chris (Track A)
+The LLM only classifies listings. No eBay data is used for training or fine-tuning.
 """
 
+from __future__ import annotations
+
 import json
-import logging
 import os
+import re
 import time
+from dataclasses import dataclass
 from difflib import SequenceMatcher
-from typing import Any
 
-from groq import Groq
-from pydantic import ValidationError
-from sqlalchemy import create_engine, text
 from dotenv import load_dotenv
+from pydantic import ValidationError
+from sqlalchemy import text
 
+from common.db import get_engine
+from common.log import get_logger
 from llm.models import ProductPair, SKUMatch
 
 load_dotenv()
+logger = get_logger("sku_matcher")
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-)
-logger = logging.getLogger("sku_matcher")
+# Groq retired llama-3.3-70b-versatile for free and developer tiers on 2026-08-16.
+MODEL = os.getenv("MATCHER_MODEL", "openai/gpt-oss-120b")
+MAX_PAIRS_PER_RUN = int(os.getenv("MATCHER_MAX_PAIRS", "50"))
+MAX_CANDIDATES = int(os.getenv("MATCHER_MAX_CANDIDATES", "3"))
+MIN_SCORE = float(os.getenv("MATCHER_MIN_SCORE", "0.35"))
+CONFIDENCE_THRESHOLD = float(os.getenv("MATCHER_CONFIDENCE_THRESHOLD", "0.6"))
+# ~8 requests/min keeps well inside Groq's free-tier request and token limits.
+REQUEST_DELAY_S = float(os.getenv("MATCHER_REQUEST_DELAY", "7.0"))
+MAX_ATTEMPTS = 3
+# Errors that retrying cannot fix (bad key, unknown model, bad request): stop the run.
+FATAL_STATUS_CODES = {400, 401, 403, 404}
 
-# ---------------------------------------------------------------------------
-# Configuration
-# ---------------------------------------------------------------------------
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-MODEL = "llama-3.3-70b-versatile"  # Best quality on Groq free tier
-MAX_PAIRS_PER_RUN = 50
-MAX_CANDIDATES = 5
-MIN_SIMILARITY = 0.25
-CONFIDENCE_THRESHOLD = 0.6
 
-# Rate limiting — Groq free tier: 30 RPM
-REQUEST_DELAY = 7.0  # ~8 RPM, stays under 12K TPM limit
+class MatcherConfigError(RuntimeError):
+    """The LLM provider rejected the request in a way that affects every pair."""
 
-# PostgreSQL connection
-PG_HOST = os.getenv("POSTGRES_HOST", "localhost")
-PG_PORT = os.getenv("POSTGRES_PORT", "5432")
-PG_DB = os.getenv("POSTGRES_DB", "priceradar")
-PG_USER = os.getenv("POSTGRES_USER", "priceradar")
-PG_PASS = os.getenv("POSTGRES_PASSWORD", "priceradar_dev")
-PG_URL = f"postgresql://{PG_USER}:{PG_PASS}@{PG_HOST}:{PG_PORT}/{PG_DB}"
 
-# System prompt
-SYSTEM_PROMPT = """You are a product matching specialist for a competitive pricing intelligence platform.
+KNOWN_BRANDS = {
+    "samsung",
+    "lg",
+    "sony",
+    "apple",
+    "dell",
+    "hp",
+    "lenovo",
+    "asus",
+    "acer",
+    "microsoft",
+    "bose",
+    "jbl",
+    "beats",
+    "sennheiser",
+    "tcl",
+    "hisense",
+    "vizio",
+    "google",
+    "garmin",
+    "fitbit",
+    "amazon",
+    "panasonic",
+    "toshiba",
+    "philips",
+}
+# Product lines that imply a brand even when sellers leave the brand out.
+LINE_BRANDS = {
+    "airpods": "apple",
+    "airpod": "apple",
+    "ipad": "apple",
+    "macbook": "apple",
+    "galaxy": "samsung",
+    "bravia": "sony",
+    "thinkpad": "lenovo",
+    "surface": "microsoft",
+    "pixel": "google",
+    "omen": "hp",
+    "spectre": "hp",
+    "rog": "asus",
+    "zephyrus": "asus",
+    "xps": "dell",
+    "quietcomfort": "bose",
+}
+NOISE_WORDS = {
+    "new",
+    "brand",
+    "sealed",
+    "factory",
+    "authentic",
+    "genuine",
+    "original",
+    "fast",
+    "free",
+    "shipping",
+    "ship",
+    "nib",
+    "bnib",
+    "open",
+    "box",
+    "latest",
+    "model",
+    "the",
+    "with",
+    "and",
+    "for",
+    "in",
+    "of",
+    "class",
+}
 
-Your job is to determine whether two product listings from different marketplaces (eBay and Best Buy) 
-refer to the SAME physical product.
+SYSTEM_PROMPT = """You are a product matching specialist for a price comparison platform.
+
+Decide whether an eBay listing and a Best Buy listing refer to the SAME physical product.
 
 Guidelines:
-- Focus on: brand, model number, screen size, storage capacity, color, generation/year
-- Model numbers are the strongest signal (e.g., QN65Q80C, WH1000XM5, OLED65C4PUA)
-- Different sellers listing the same product may use different title formats
-- Ignore differences in: seller name, shipping info, bundle accessories, listing format
-- "New" vs "Open Box" condition differences do NOT make them different products
-- If one title has a model number and the other doesn't, but specs match, it can still be a match
-- Be conservative: when in doubt, set is_match=false with lower confidence
+- Compare brand, model number, screen size, storage, memory, color, generation/year.
+- Model numbers are the strongest signal (e.g. QN65Q80C, WH1000XM5, OLED65C4PUA).
+- Sellers format titles differently; ignore seller names, shipping, bundles, listing style.
+- New vs. open box is the same product.
+- Different storage, size, generation or chip (e.g. M2 vs M3) is a different product.
+- Accessories (cases, chargers, screen protectors) and "box only" or "empty box" listings
+  are never the product itself.
+- If one title lacks a model number but every stated spec matches, it can still match.
+- Be conservative: when in doubt, is_match=false with lower confidence.
 
-Confidence scoring:
-- 0.9-1.0: Model numbers match exactly
-- 0.7-0.89: Strong spec match (brand + size + type) but model number not confirmed
-- 0.5-0.69: Partial match, some specs align but significant uncertainty
-- 0.0-0.49: Likely different products
+Confidence:
+- 0.90-1.00: model numbers match exactly
+- 0.70-0.89: brand, line and key specs match; model number not confirmed
+- 0.50-0.69: partial match with real uncertainty
+- 0.00-0.49: likely different products
 
-You MUST respond with ONLY valid JSON matching this exact schema, no other text:
-{
-    "is_match": true or false,
-    "confidence": 0.0 to 1.0,
-    "canonical_name": "Standardized product name",
-    "brand": "Brand name",
-    "model_number": "Model number or null",
-    "reasoning": "Brief explanation"
-}"""
+Respond with ONLY a JSON object:
+{"is_match": true|false, "confidence": 0.0-1.0, "canonical_name": "Brand Line Model Key-specs",
+ "brand": "Brand", "model_number": "model or null", "reasoning": "one sentence"}"""
 
 
-def get_engine():
-    """Create SQLAlchemy engine."""
-    return create_engine(PG_URL)
+@dataclass(frozen=True)
+class Listing:
+    id: int
+    title: str
+    price: float | None
+    category: str
+    brand: str | None
 
 
-def get_products_by_category(engine) -> dict[str, dict[str, list[dict]]]:
-    """Fetch products from raw_listings grouped by category and source."""
-    with engine.connect() as conn:
-        result = conn.execute(text("""
-            SELECT id, product_name, price, sale_price, source, category, brand, sku
-            FROM raw_listings
-            ORDER BY category, source
-        """))
-        rows = result.fetchall()
-
-    categories: dict[str, dict[str, list[dict]]] = {}
-    for row in rows:
-        cat = row[5]
-        source = row[4]
-        if cat not in categories:
-            categories[cat] = {"ebay": [], "bestbuy": []}
-        product = {
-            "id": row[0],
-            "product_name": row[1],
-            "price": float(row[2]) if row[2] else None,
-            "sale_price": float(row[3]) if row[3] else None,
-            "source": source,
-            "category": cat,
-            "brand": row[6],
-            "sku": row[7],
-        }
-        if source in categories[cat]:
-            categories[cat][source].append(product)
-
-    for cat, sources in categories.items():
-        logger.info("Category '%s': %d eBay, %d Best Buy products",
-                     cat, len(sources["ebay"]), len(sources["bestbuy"]))
-
-    return categories
+# ---------------------------------------------------------------------------
+# Candidate scoring (pure functions, unit-tested)
+# ---------------------------------------------------------------------------
+def normalize_title(title: str) -> str:
+    """Lower-case, join hyphenated model numbers, drop punctuation and noise words."""
+    t = title.lower().replace('"', " inch ").replace("”", " inch ")
+    t = re.sub(r"(?<=[a-z0-9])-(?=[a-z0-9])", "", t)  # wh-1000xm5 -> wh1000xm5
+    t = re.sub(r"[^a-z0-9. ]+", " ", t)
+    return " ".join(w for w in t.split() if w not in NOISE_WORDS)
 
 
-def get_existing_matches(engine) -> set[tuple[int, int]]:
-    """Get already-matched product pairs to avoid re-processing."""
-    with engine.connect() as conn:
-        result = conn.execute(text("""
-            SELECT ebay_listing_id, bestbuy_listing_id
-            FROM matched_products
-        """))
-        return {(row[0], row[1]) for row in result.fetchall()}
+SPEC_TOKEN = re.compile(r"^\d+(\.\d+)?(gb|tb|mm|hz|in|inch|w|mah|gen|th|nd|rd|st)$")
 
 
-def string_similarity(a: str, b: str) -> float:
-    """Calculate string similarity ratio between two product names."""
-    return SequenceMatcher(None, a.lower(), b.lower()).ratio()
+def model_tokens(title: str) -> set[str]:
+    """Tokens that look like model numbers (4+ chars mixing letters and digits).
+
+    Plain specs such as "128gb", "45mm" or "144hz" are not model numbers.
+    """
+    return {
+        tok
+        for tok in normalize_title(title).split()
+        if len(tok) >= 4
+        and re.search(r"[a-z]", tok)
+        and re.search(r"\d", tok)
+        and not SPEC_TOKEN.match(tok)
+    }
 
 
-def find_candidates(
-    bestbuy_product: dict,
-    ebay_products: list[dict],
-    existing_matches: set[tuple[int, int]],
+ACCESSORY_PATTERN = re.compile(
+    r"\b(box only|empty box|for parts|compatible with)\b|\bfor\b(?! business\b)",
+    flags=re.IGNORECASE,
+)
+
+
+def looks_like_accessory(title: str) -> bool:
+    """True for listings that sell something *for* a product (cases, remotes, bands,
+    chargers, screen protectors) or only its packaging. Such titles are skipped before
+    any LLM call; on real eBay data they are close to half of all titles."""
+    return bool(ACCESSORY_PATTERN.search(title))
+
+
+def brands_in(title: str) -> set[str]:
+    """Known brands named in a title, directly or through a product line (iPad -> apple)."""
+    words = set(re.findall(r"[a-z]+", title.lower()))
+    return (words & KNOWN_BRANDS) | {LINE_BRANDS[w] for w in words & LINE_BRANDS.keys()}
+
+
+def candidate_score(ebay_title: str, bestbuy_title: str, bestbuy_brand: str | None) -> float:
+    """Cheap relevance score, roughly 0 to 1.4; -1 means "never a match".
+
+    A pair is only considered when the eBay title names the Best Buy brand (directly or
+    via a product line such as "iPad") or both titles share a model number. The score
+    blends character similarity and word overlap of the normalized titles, plus a bonus
+    for a shared model number.
+    """
+    brand = (bestbuy_brand or "").lower()
+    shared_model = bool(model_tokens(ebay_title) & model_tokens(bestbuy_title))
+    if brand not in brands_in(ebay_title) and not shared_model:
+        return -1.0
+
+    a, b = normalize_title(ebay_title), normalize_title(bestbuy_title)
+    ta, tb = set(a.split()), set(b.split())
+    containment = len(ta & tb) / min(len(ta), len(tb)) if ta and tb else 0.0
+    score = 0.5 * SequenceMatcher(None, a, b).ratio() + 0.5 * containment
+    if shared_model:
+        score += 0.3
+    return score
+
+
+def shortlist(
+    ebay: Listing,
+    bestbuy: list[Listing],
+    judged: set[tuple[str, str]],
     max_candidates: int = MAX_CANDIDATES,
-) -> list[dict]:
-    """Find top N eBay candidates using string similarity as pre-filter."""
-    bb_name = bestbuy_product["product_name"].lower()
-    bb_id = bestbuy_product["id"]
-
+    min_score: float = MIN_SCORE,
+) -> list[tuple[float, Listing]]:
+    """Top Best Buy candidates for one eBay title, skipping pairs judged before."""
+    if looks_like_accessory(ebay.title):
+        return []
     scored = []
-    for ebay_prod in ebay_products:
-        if (ebay_prod["id"], bb_id) in existing_matches:
+    for bb in bestbuy:
+        if bb.category != ebay.category or (ebay.title, bb.title) in judged:
             continue
-        similarity = string_similarity(bb_name, ebay_prod["product_name"])
-        if similarity >= MIN_SIMILARITY:
-            scored.append((similarity, ebay_prod))
+        score = candidate_score(ebay.title, bb.title, bb.brand)
+        if score >= min_score:
+            scored.append((score, bb))
+    scored.sort(key=lambda pair: pair[0], reverse=True)
+    return scored[:max_candidates]
 
-    scored.sort(key=lambda x: x[0], reverse=True)
-    return [prod for _, prod in scored[:max_candidates]]
+
+# ---------------------------------------------------------------------------
+# Database access
+# ---------------------------------------------------------------------------
+LATEST_TITLES_SQL = text(
+    """
+    SELECT DISTINCT ON (source, category, product_name)
+           id, product_name, COALESCE(sale_price, price) AS price, source, category, brand
+    FROM raw_listings
+    WHERE source IN ('ebay', 'bestbuy') AND category IS NOT NULL
+    ORDER BY source, category, product_name, scraped_at DESC, id DESC
+    """
+)
+
+JUDGED_PAIRS_SQL = text(
+    """
+    SELECT e.product_name AS ebay_title, b.product_name AS bestbuy_title,
+           m.is_match, m.confidence_score
+    FROM matched_products m
+    JOIN raw_listings e ON e.id = m.ebay_listing_id
+    JOIN raw_listings b ON b.id = m.bestbuy_listing_id
+    """
+)
+
+INSERT_MATCH_SQL = text(
+    """
+    INSERT INTO matched_products
+        (ebay_listing_id, bestbuy_listing_id, canonical_name, brand,
+         model_number, confidence_score, is_match, matched_at)
+    VALUES
+        (:ebay_id, :bestbuy_id, :canonical_name, :brand,
+         :model_number, :confidence, :is_match, NOW() AT TIME ZONE 'UTC')
+    """
+)
 
 
-def match_pair_with_llm(client: Groq, pair: ProductPair) -> SKUMatch | None:
-    """Send a product pair to Groq/Llama for structured matching."""
-    ebay_price_str = f"  Price: ${pair.ebay_price:.2f}\n" if pair.ebay_price else ""
-    bestbuy_price_str = f"  Price: ${pair.bestbuy_price:.2f}\n" if pair.bestbuy_price else ""
-
-    user_message = (
-        f"Compare these two product listings and determine if they are the same product:\n\n"
-        f"**eBay Listing:**\n"
-        f"  Title: {pair.ebay_title}\n"
-        f"{ebay_price_str}"
-        f"  Category: {pair.category}\n\n"
-        f"**Best Buy Listing:**\n"
-        f"  Title: {pair.bestbuy_title}\n"
-        f"{bestbuy_price_str}"
-        f"  Category: {pair.category}\n\n"
-        f"Determine if these are the same physical product. "
-        f"Respond with JSON only."
-    )
-
-    for attempt in range(3):
-        try:
-            response = client.chat.completions.create(
-                model=MODEL,
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": user_message},
-                ],
-                temperature=0.1,
-                max_tokens=512,
-                response_format={"type": "json_object"},
+def load_titles(engine) -> tuple[list[Listing], list[Listing]]:
+    ebay, bestbuy = [], []
+    with engine.connect() as conn:
+        for row in conn.execute(LATEST_TITLES_SQL).mappings():
+            listing = Listing(
+                id=row["id"],
+                title=row["product_name"],
+                price=float(row["price"]) if row["price"] is not None else None,
+                category=row["category"],
+                brand=row["brand"],
             )
-
-            response_text = response.choices[0].message.content.strip()
-
-            try:
-                data = json.loads(response_text)
-                match = SKUMatch(**data)
-                return match
-            except (json.JSONDecodeError, ValidationError) as e:
-                logger.warning("Failed to parse response (attempt %d): %s\nRaw: %s",
-                                 attempt + 1, e, response_text[:200])
-                if attempt < 2:
-                    continue
-                return None
-
-        except Exception as e:
-            error_str = str(e)
-            if "429" in error_str or "rate_limit" in error_str.lower():
-                wait_time = 15 * (attempt + 1)
-                logger.warning("Rate limited (attempt %d/3) — waiting %ds",
-                                 attempt + 1, wait_time)
-                time.sleep(wait_time)
-                if attempt == 2:
-                    return None
-            else:
-                logger.error("Groq API error: %s", e)
-                return None
-
-    return None
+            (ebay if row["source"] == "ebay" else bestbuy).append(listing)
+    logger.info("Distinct titles: %d eBay, %d Best Buy", len(ebay), len(bestbuy))
+    return ebay, bestbuy
 
 
-def save_match(engine, ebay_id: int, bestbuy_id: int, match: SKUMatch) -> None:
-    """Save a match result to the matched_products table."""
+def load_judged(engine) -> tuple[set[tuple[str, str]], set[str]]:
+    """Title pairs already judged, and eBay titles that already have an accepted match."""
+    judged, matched = set(), set()
+    with engine.connect() as conn:
+        for row in conn.execute(JUDGED_PAIRS_SQL).mappings():
+            judged.add((row["ebay_title"], row["bestbuy_title"]))
+            if row["is_match"] and row["confidence_score"] >= CONFIDENCE_THRESHOLD:
+                matched.add(row["ebay_title"])
+    return judged, matched
+
+
+def save_match(engine, pair: ProductPair, match: SKUMatch) -> None:
     with engine.begin() as conn:
         conn.execute(
-            text("""
-                INSERT INTO matched_products
-                    (ebay_listing_id, bestbuy_listing_id, canonical_name,
-                     brand, model_number, confidence_score, is_match, matched_at)
-                VALUES
-                    (:ebay_id, :bestbuy_id, :canonical_name,
-                     :brand, :model_number, :confidence, :is_match, NOW())
-            """),
+            INSERT_MATCH_SQL,
             {
-                "ebay_id": ebay_id,
-                "bestbuy_id": bestbuy_id,
-                "canonical_name": match.canonical_name or "Unknown",
+                "ebay_id": pair.ebay_listing_id,
+                "bestbuy_id": pair.bestbuy_listing_id,
+                "canonical_name": match.canonical_name or pair.bestbuy_title,
                 "brand": match.brand or "Unknown",
                 "model_number": match.model_number,
                 "confidence": match.confidence,
@@ -253,97 +329,137 @@ def save_match(engine, ebay_id: int, bestbuy_id: int, match: SKUMatch) -> None:
         )
 
 
-def main(max_pairs: int = MAX_PAIRS_PER_RUN) -> None:
-    """Main entry point: match products across eBay and Best Buy."""
-    if not GROQ_API_KEY:
-        logger.error("GROQ_API_KEY not set — cannot run SKU matching")
-        return
+# ---------------------------------------------------------------------------
+# LLM call
+# ---------------------------------------------------------------------------
+def build_user_message(pair: ProductPair) -> str:
+    def price(p: float | None) -> str:
+        return f"\n  Price: ${p:.2f}" if p else ""
 
-    logger.info("=" * 60)
-    logger.info("Starting LLM SKU Matching")
-    logger.info("Model: %s (via Groq)", MODEL)
-    logger.info("Max pairs: %d | Delay: %.1fs", max_pairs, REQUEST_DELAY)
-    logger.info("=" * 60)
+    return (
+        "Are these the same product?\n\n"
+        f"eBay listing:\n  Title: {pair.ebay_title}{price(pair.ebay_price)}\n\n"
+        f"Best Buy listing:\n  Title: {pair.bestbuy_title}{price(pair.bestbuy_price)}\n\n"
+        f"Category: {pair.category}. Respond with JSON only."
+    )
 
-    client = Groq(api_key=GROQ_API_KEY)
+
+def _completion_kwargs() -> dict:
+    kwargs = {
+        "model": MODEL,
+        "temperature": 0.1,
+        "max_tokens": 1024,
+        "response_format": {"type": "json_object"},
+    }
+    if MODEL.startswith("openai/gpt-oss"):
+        # Reasoning models spend completion tokens thinking; keep that short.
+        kwargs["extra_body"] = {"reasoning_effort": "low"}
+    return kwargs
+
+
+def match_pair_with_llm(client, pair: ProductPair) -> SKUMatch | None:
+    """Ask the model about one pair. Retries bad JSON and rate limits; raises
+    MatcherConfigError on errors that would fail every pair (bad key, unknown model)."""
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        try:
+            response = client.chat.completions.create(
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": build_user_message(pair)},
+                ],
+                **_completion_kwargs(),
+            )
+            content = response.choices[0].message.content or ""
+            return SKUMatch(**json.loads(content))
+        except (json.JSONDecodeError, ValidationError) as exc:
+            logger.warning("Unparseable reply (attempt %d/%d): %s", attempt, MAX_ATTEMPTS, exc)
+        except Exception as exc:  # groq raises its own error types; keep this dependency-light
+            status = getattr(exc, "status_code", None)
+            if status in FATAL_STATUS_CODES:
+                raise MatcherConfigError(f"Groq rejected the request ({status}): {exc}") from exc
+            if status == 429 or "rate" in str(exc).lower():
+                wait = 15 * attempt
+                logger.warning(
+                    "Rate limited (attempt %d/%d); waiting %ds", attempt, MAX_ATTEMPTS, wait
+                )
+                time.sleep(wait)
+            else:
+                logger.error("Groq API error: %s", exc)
+                return None
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+def main(max_pairs: int = MAX_PAIRS_PER_RUN) -> dict[str, int]:
+    """Run one matching pass. Returns counts of pairs judged, matches and failures."""
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        raise RuntimeError("GROQ_API_KEY is not set")
+
+    from groq import Groq
+
+    client = Groq(api_key=api_key)
     engine = get_engine()
+    ebay, bestbuy = load_titles(engine)
+    judged, matched_titles = load_judged(engine)
+    logger.info(
+        "Already judged: %d pairs; %d eBay titles matched", len(judged), len(matched_titles)
+    )
 
-    categories = get_products_by_category(engine)
-    existing_matches = get_existing_matches(engine)
-    logger.info("Existing matches in DB: %d", len(existing_matches))
-
-    pairs_processed = 0
-    matches_found = 0
-    non_matches = 0
-
-    for category, sources in categories.items():
-        ebay_products = sources["ebay"]
-        bestbuy_products = sources["bestbuy"]
-
-        if not ebay_products or not bestbuy_products:
-            logger.info("Skipping '%s' — missing products from one source", category)
+    # Plan: eBay titles without a match, most promising first.
+    plan = []
+    for listing in ebay:
+        if listing.title in matched_titles:
             continue
+        candidates = shortlist(listing, bestbuy, judged)
+        if candidates:
+            plan.append((candidates[0][0], listing, candidates))
+    plan.sort(key=lambda item: item[0], reverse=True)
+    logger.info("%d eBay titles have candidates; budget is %d LLM calls", len(plan), max_pairs)
 
-        logger.info("Processing category: %s (%d eBay x %d Best Buy)",
-                     category, len(ebay_products), len(bestbuy_products))
-
-        for bb_product in bestbuy_products:
-            if pairs_processed >= max_pairs:
+    stats = {"judged": 0, "matches": 0, "failed": 0}
+    for _, ebay_listing, candidates in plan:
+        for score, bb in candidates:
+            if stats["judged"] + stats["failed"] >= max_pairs:
                 break
-
-            candidates = find_candidates(bb_product, ebay_products, existing_matches)
-            if not candidates:
+            pair = ProductPair(
+                ebay_title=ebay_listing.title,
+                bestbuy_title=bb.title,
+                ebay_price=ebay_listing.price,
+                bestbuy_price=bb.price,
+                category=ebay_listing.category,
+                ebay_listing_id=ebay_listing.id,
+                bestbuy_listing_id=bb.id,
+            )
+            match = match_pair_with_llm(client, pair)
+            time.sleep(REQUEST_DELAY_S)
+            if match is None:
+                stats["failed"] += 1
                 continue
 
-            for ebay_product in candidates:
-                if pairs_processed >= max_pairs:
-                    break
-
-                pair = ProductPair(
-                    ebay_title=ebay_product["product_name"],
-                    bestbuy_title=bb_product["product_name"],
-                    ebay_price=ebay_product["price"],
-                    bestbuy_price=bb_product["price"],
-                    category=category,
-                    ebay_listing_id=ebay_product["id"],
-                    bestbuy_listing_id=bb_product["id"],
-                )
-
-                logger.info("  [%d/%d] [eBay] %s",
-                             pairs_processed + 1, max_pairs,
-                             ebay_product["product_name"][:55])
-                logger.info("          [BB]  %s",
-                             bb_product["product_name"][:55])
-
-                match = match_pair_with_llm(client, pair)
-
-                if match:
-                    save_match(engine, ebay_product["id"], bb_product["id"], match)
-
-                    status = "MATCH" if match.is_match else "NO MATCH"
-                    logger.info("    -> %s (%.2f) %s",
-                                 status, match.confidence, match.reasoning[:70])
-
-                    if match.is_match and match.confidence >= CONFIDENCE_THRESHOLD:
-                        matches_found += 1
-                    else:
-                        non_matches += 1
-                else:
-                    logger.warning("    -> FAILED (no valid response)")
-
-                pairs_processed += 1
-                time.sleep(REQUEST_DELAY)
-
-        if pairs_processed >= max_pairs:
+            save_match(engine, pair, match)
+            stats["judged"] += 1
+            accepted = match.is_match and match.confidence >= CONFIDENCE_THRESHOLD
+            logger.info(
+                "%s (%.2f, score %.2f) %s  <->  %s",
+                "MATCH" if accepted else "no match",
+                match.confidence,
+                score,
+                ebay_listing.title[:60],
+                bb.title[:60],
+            )
+            if accepted:
+                stats["matches"] += 1
+                break  # this eBay title is resolved
+        else:
+            continue
+        if stats["judged"] + stats["failed"] >= max_pairs:
             break
 
-    logger.info("=" * 60)
-    logger.info("SKU Matching Complete!")
-    logger.info("  Pairs processed: %d", pairs_processed)
-    logger.info("  Matches found:   %d", matches_found)
-    logger.info("  Non-matches:     %d", non_matches)
-    logger.info("  Cost: $0.00 (Groq free tier + Llama 3.3 70B)")
-    logger.info("=" * 60)
+    logger.info("Matching complete: %s", stats)
+    return stats
 
 
 if __name__ == "__main__":

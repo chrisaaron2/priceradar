@@ -1,57 +1,28 @@
-# PriceRadar - Project Context
+# PriceRadar - project context
 
-## What This Is
-B2B Competitive Pricing Intelligence Platform. Monitors competitor pricing across
-eBay and Best Buy, normalizes product SKUs using an LLM, and provides analytics
-dashboards and price forecasting. Educational/portfolio project for NJIT MS Data Science.
+PriceRadar is the data pipeline behind ShopGPT: it tracks consumer-electronics prices on
+eBay (live Browse API) and Best Buy (generated from a real-product catalog), uses an LLM
+to work out which listings are the same product, and builds a BigQuery star schema that
+Metabase, the FastAPI service and the ML jobs read.
 
-## Architecture
-```
-[eBay Browse API] [Best Buy API]
-        │                │
-        └───────┬────────┘
-                │  Airflow DAG (@every6hours)
-                ▼
-        [AWS S3 Raw Layer]  ← Timestamped raw JSON
-                │
-                ▼
-        [PostgreSQL Staging] ← raw_listings table
-                │
-                ▼
-        [PySpark Job]       ← Dedup, normalize, clean
-                │
-        [LLM SKU Matching]  ← Anthropic Claude structured output
-                │
-                ▼
-        [BigQuery Warehouse] ← Star schema via dbt
-                │
-        ┌───────┴────────┐
-        ▼                ▼
-  [Metabase]         [MLflow]
-  Dashboards         ML experiments
-                │
-        [FastAPI Service]
-```
+## Flow
+Airflow DAG `priceradar_ingestion`, every 6 hours:
+`ingest_bestbuy + ingest_ebay -> spark_processing -> sku_matching -> load_bigquery -> dbt_build`
 
-## Two-Developer Split
+- `ingestion/` writes raw JSON to S3 and rows to Postgres `raw_listings`
+- `spark/process.py` cleans raw_listings into Parquet on S3
+- `llm/sku_matcher.py` judges eBay/Best Buy title pairs into Postgres `matched_products`
+- `ingestion/load_to_bigquery.py` mirrors both tables into BigQuery
+- `dbt/priceradar` builds `int_listing_products` (title -> product) and the star schema;
+  `dim_product` merges listings that the LLM matched with confidence >= 0.6
+- `api/` (ShopGPT API) and `ml/` read the star schema
+- `common/` holds shared Postgres, S3, BigQuery and logging helpers
 
-### Track A - Upstream Pipeline (Chris)
-Files: `ingestion/`, `spark/`, `llm/`, `dags/`, `docker/postgres_init.sql`
-
-### Track B - Downstream Analytics (Punith)
-Files: `dbt/`, `ml/`, `api/`, `ingestion/load_to_bigquery.py`
-
-### Shared (coordinate before editing)
-`docker-compose.yml`, `requirements.txt`, `.env.example`, `README.md`
-
-## Handoff Contract
-Chris writes → Punith reads:
-1. PostgreSQL `raw_listings` table (see `docker/postgres_init.sql`)
-2. PostgreSQL `matched_products` table (see `docker/postgres_init.sql`)
-3. S3 Parquet at `s3://priceradar-raw/processed/clean/date=YYYY-MM-DD/`
-
-## Key Constraints
-- eBay API: inference/classification only, NOT training (license compliance)
-- Free tier limits: eBay 5K calls/day, Best Buy 5 req/sec, S3 5GB, BQ 1TB queries/mo
-- All secrets via environment variables, never hardcode
-- Python 3.11+, type hints, Pydantic models, logging (not print)
+## Conventions
+- Python 3.11, type hints, `common.log.get_logger`, no print
+- All secrets come from environment variables (.env, see .env.example); never hardcode
+- Postgres timestamps are naive UTC
+- eBay data is for inference/classification only, never training (eBay API license)
+- Run `ruff check . && ruff format --check . && pytest` before committing
+- Changing `raw_listings` or `matched_products` means updating `docker/postgres_init.sql`,
+  `ingestion/load_to_bigquery.py` and the dbt staging models together
